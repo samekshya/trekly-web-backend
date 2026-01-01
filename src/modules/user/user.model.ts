@@ -29,7 +29,7 @@ const UserSchema: Schema<IUser> = new Schema(
       type: String,
       required: true,
       minlength: 6,
-      select: false, // important: password won't be returned by default
+      select: false,
     },
     role: {
       type: String,
@@ -40,7 +40,6 @@ const UserSchema: Schema<IUser> = new Schema(
   { timestamps: true }
 );
 
-// Prevent model overwrite error in dev/hot reload
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 
