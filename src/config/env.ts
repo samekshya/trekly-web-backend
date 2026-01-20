@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-
 dotenv.config();
 
 export const env = {
@@ -9,10 +8,6 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
 };
 
-if (!env.MONGO_URI) {
-  throw new Error("MONGO_URI is missing in .env");
-}
+if (!env.MONGO_URI) throw new Error("MONGO_URI is missing in .env");
+if (!env.JWT_SECRET) throw new Error("JWT_SECRET is missing in .env");
 
-if (!env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is missing in .env");
-}
