@@ -10,6 +10,12 @@ router.get("/test", (_req, res) => {
   res.json({ success: true, message: "Auth routes working" });
 });
 
+router.post("/logout", (_req, res) => {
+  res.clearCookie("token", { path: "/" });
+  return res.json({ success: true, message: "Logged out" });
+});
+
+
 router.post("/register", validateDto(registerSchema), registerUser);
 router.post("/login", validateDto(loginSchema), loginUser);
 
