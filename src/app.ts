@@ -5,6 +5,8 @@ import authRoutes from "./modules/auth/auth.routes";
 import uploadRoutes from "./modules/upload/upload.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import path from "path";
+import adminRoutes from "./modules/admin/admin.routes";
+
 
 
 const app = express();
@@ -19,6 +21,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
+app.use("/api/admin", adminRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
