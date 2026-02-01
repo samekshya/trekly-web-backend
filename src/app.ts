@@ -28,10 +28,6 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ success: true, message: "Backend is running" });
 });
 
-app.post("/api/upload-debug", (_req, res) => {
-  return res.status(200).json({ ok: true });
-});
-
 
 // Routes
 app.use("/api/auth", authRoutes);
