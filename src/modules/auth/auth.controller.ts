@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { loginUserService, registerUserService } from "./auth.service";
+import User from "../user/user.model";
+import bcrypt from "bcryptjs";
 
 export const registerUser = async (
   req: Request,
@@ -51,10 +53,14 @@ export const loginUser = async (
     });
 
     return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: result.data.user,
-    });
+  success: true,
+  message: "Login successful",
+  data: {
+    token,            // ✅ add this
+    user: result.data.user,
+  },
+});
+
   } catch (err) {
     next(err);
   }
@@ -81,6 +87,63 @@ export const logoutUser = async (
     next(err);
   }
 };
+
+export const updateProfile = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const userIdFromToken = req.user?.id;
+    const userIdFromParam = req.params.id;
+
+    if (!userIdFromToken) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (userIdFromToken !== userIdFromParam) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only update your own profile",
+      });
+    }
+
+    const updateData: any = {};
+    const { name, email, password } = req.body;
+
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userIdFromParam, updateData, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+
+    return res.status(200).json({ success: true, data: updatedUser });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getMe = async (req: any, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const user = await User.findById(userId).select("-password");
+
+  return res.status(200).json({
+    success: true,
+    data: user,
+  });
+};
+
 
 // import { Request, Response, NextFunction } from "express";
 // import { loginUserService, registerUserService } from "./auth.service";
