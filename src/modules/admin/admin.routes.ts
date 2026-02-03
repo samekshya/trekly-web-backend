@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { upload } from "../../config/multer";
 import { isAdmin } from "../../middlewares/isAdmin";
+import { requireAuth } from "../../middlewares/requireAuth";
 
 // TODO: Replace this with your real auth middleware import
 // Example: import { requireAuth } from "../auth/auth.middleware";
-import { requireAuth } from "../auth/auth.middleware";
+
 
 import {
   createUser,
