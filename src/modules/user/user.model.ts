@@ -8,6 +8,8 @@ export interface IUser extends Document {
   image?: string; // ✅ added
   createdAt: Date;
   updatedAt: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -39,8 +41,15 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     image: {
       type: String,
-    }, // ✅ added
+    }, //reset password ko line 
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
+  
   { timestamps: true }
 );
 
