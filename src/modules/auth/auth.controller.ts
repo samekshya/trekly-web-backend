@@ -173,18 +173,22 @@ export const forgotPassword = async (req: Request, res: Response) => {
     );
 
     const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
-
-    await sendEmail(
-  user.email,
-  "Reset your Trekly password",
-  `
-    <h3>Password Reset Request</h3>
-    <p>You requested to reset your password.</p>
-    <p>Click below to reset:</p>
-    <a href="${resetLink}">${resetLink}</a>
-    <p>This link expires in 15 minutes.</p>
-  `
-);
+      return res.status(200).json({
+  success: true,
+  message: "Reset link generated (DEV MODE)",
+  resetLink,
+});
+//     await sendEmail(
+//   user.email,
+//   "Reset your Trekly password",
+//   `
+//     <h3>Password Reset Request</h3>
+//     <p>You requested to reset your password.</p>
+//     <p>Click below to reset:</p>
+//     <a href="${resetLink}">${resetLink}</a>
+//     <p>This link expires in 15 minutes.</p>
+//   `
+// );
 
 return res.status(200).json({
   success: true,
