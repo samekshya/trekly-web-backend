@@ -39,6 +39,14 @@ router.post("/forgot-password", forgotPassword);
 //reset password ko route ho tala ko
 router.post("/reset-password", resetPassword);
 
+console.log("[auth.routes] REGISTERED ROUTES:");
+router.stack.forEach((layer: any) => {
+  if (layer.route) {
+    const methods = Object.keys(layer.route.methods).join(",").toUpperCase();
+    console.log(`- ${methods} ${layer.route.path}`);
+  }
+});
+
 export default router;
 
 
