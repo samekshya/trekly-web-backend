@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import User from "../user/user.model";
 
+
 export const createUser = async (req: any, res: Response) => {
   try {
     const { name, email, password, role } = req.body;
@@ -56,14 +57,45 @@ export const createUser = async (req: any, res: Response) => {
   }
 };
 
+
+
 export const getAllUsers = async (req: Request, res: Response) => {
-  try {
-    const users = await User.find().select("-password").sort({ createdAt: -1 });
-    return res.status(200).json({ success: true, data: users });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+  
+  const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+  const limit = Math.max(parseInt(req.query.limit as string) || 10, 1);
+
+  const skip = (page - 1) * limit;
+
+  // Optional: basic search (safe to keep even if you don’t use it in frontend yet)
+  const search = (req.query.search as string)?.trim();
+  const filter: any = {};
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
   }
+
+  const [users, total] = await Promise.all([
+    User.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
+    User.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return res.status(200).json({
+    success: true,
+    message: "Users fetched successfully",
+    data: users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  });
 };
+
 
 export const getUserById = async (req: Request, res: Response) => {
   try {

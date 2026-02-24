@@ -6,9 +6,11 @@ import { loginUser, registerUser, updateProfile } from "./auth.controller";
 import { requireAuth } from "../../middlewares/requireAuth";
 import { upload } from "../../config/multer";
 import { getMe } from "./auth.controller";
+import { forgotPassword, resetPassword } from "./auth.controller";
 
 
 //console.log("AUTH ROUTES LOADED - WITH /ME");
+console.log("[auth.routes] FILE LOADED");
 
 
 const router = Router();
@@ -30,6 +32,12 @@ router.post("/login", validateDto(loginSchema), loginUser);
 
 // ✅ User profile update (logged-in user only, supports image upload)
 router.put("/:id", requireAuth, upload.single("image"), updateProfile);
+
+//forgot passwod ko route hop yo chai
+router.post("/forgot-password", forgotPassword);
+
+//reset password ko route ho tala ko
+router.post("/reset-password", resetPassword);
 
 export default router;
 
