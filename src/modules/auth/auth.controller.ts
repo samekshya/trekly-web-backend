@@ -174,12 +174,22 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
 
-    // TEMP: return link for testing (we’ll add email after reset endpoint works)
-    return res.status(200).json({
-      success: true,
-      message: "Reset link generated (email disabled for now).",
-      resetLink,
-    });
+    await sendEmail(
+  user.email,
+  "Reset your Trekly password",
+  `
+    <h3>Password Reset Request</h3>
+    <p>You requested to reset your password.</p>
+    <p>Click below to reset:</p>
+    <a href="${resetLink}">${resetLink}</a>
+    <p>This link expires in 15 minutes.</p>
+  `
+);
+
+return res.status(200).json({
+  success: true,
+  message: "Password reset email sent",
+});
   } catch (err) {
     console.log("forgotPassword error:", err);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
