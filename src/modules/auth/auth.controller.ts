@@ -93,17 +93,21 @@ export const logoutUser = async (
 
 export const updateProfile = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const userIdFromToken = req.user?.id;
+    // Check all possible locations for the ID in the token payload
+    const userIdFromToken = req.user?.id || req.user?._id || req.user?.userId; 
     const userIdFromParam = req.params.id;
 
+    console.log(`Debug Auth: TokenID=${userIdFromToken}, ParamID=${userIdFromParam}`);
+
     if (!userIdFromToken) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return res.status(401).json({ success: false, message: "Unauthorized: No ID in token" });
     }
 
-    if (userIdFromToken !== userIdFromParam) {
+    if (userIdFromToken.toString() !== userIdFromParam.toString()) {
       return res.status(403).json({
         success: false,
         message: "You can only update your own profile",
+        debug: { token: userIdFromToken, param: userIdFromParam } // Added for easier testing
       });
     }
 
@@ -132,6 +136,48 @@ export const updateProfile = async (req: any, res: Response, next: NextFunction)
   }
 };
 
+
+// export const updateProfile = async (req: any, res: Response, next: NextFunction) => {
+//   try {
+//     const userIdFromToken = req.user?.id;
+//     const userIdFromParam = req.params.id;
+
+//     if (!userIdFromToken) {
+//       return res.status(401).json({ success: false, message: "Unauthorized" });
+//     }
+
+//     if (userIdFromToken.toString() !== userIdFromParam.toString()) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "You can only update your own profile",
+//       });
+//     }
+
+//     const updateData: any = {};
+//     const { name, email, password } = req.body;
+
+//     if (name) updateData.name = name;
+//     if (email) updateData.email = email;
+
+//     if (password) {
+//       updateData.password = await bcrypt.hash(password, 10);
+//     }
+
+//     if (req.file) {
+//       updateData.image = `/uploads/${req.file.filename}`;
+//     }
+
+//     const updatedUser = await User.findByIdAndUpdate(userIdFromParam, updateData, {
+//       new: true,
+//       runValidators: true,
+//     }).select("-password");
+
+//     return res.status(200).json({ success: true, data: updatedUser });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
 export const getMe = async (req: any, res: Response) => {
   const userId = req.user?.id;
 
@@ -153,7 +199,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email }).select("_id email");
 
-    // Always return success for security
+    // Always return success (security)
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -161,45 +207,39 @@ export const forgotPassword = async (req: Request, res: Response) => {
       });
     }
 
-    // 1️⃣ Generate raw token
     const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-    // 2️⃣ Hash it before saving
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(rawToken)
-      .digest("hex");
-
-    // 3️⃣ Expiry (15 mins)
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
-    // 4️⃣ Save to DB
     await User.updateOne(
       { _id: user._id },
-      {
-        resetPasswordToken: hashedToken,
-        resetPasswordExpires: expires,
-      }
+      { resetPasswordToken: hashedToken, resetPasswordExpires: expires }
     );
 
-    // 5️⃣ CREATE resetLink HERE
     const resetLink = `${
       process.env.FRONTEND_URL || "http://localhost:3000"
     }/reset-password?token=${rawToken}`;
 
-    // 6️⃣ Send email
-    await sendEmail(
-      user.email,
-      "Reset your Trekly password",
-      `
-        <h3>Password Reset Request</h3>
-        <p>You requested to reset your password.</p>
-        <a href="${resetLink}">${resetLink}</a>
-        <p>This link expires in 15 minutes.</p>
-      `
-    );
+    // try sending email (but don't fail the whole request in dev)
+    try {
+      await sendEmail(
+        user.email,
+        "Reset your Trekly password",
+        `
+          <h3>Password Reset Request</h3>
+          <p>You requested to reset your password.</p>
+          <p>Click below to reset:</p>
+          <a href="${resetLink}">${resetLink}</a>
+          <p>This link expires in 15 minutes.</p>
+        `
+      );
+    } catch (mailErr) {
+      console.log("sendEmail failed:", mailErr);
+      // In dev, we still want the link back
+    }
 
-    // 7️⃣ DEV MODE response
+    // DEV MODE: return the link so Postman testing is easy
     if (process.env.NODE_ENV !== "production") {
       return res.status(200).json({
         success: true,
@@ -208,17 +248,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
       });
     }
 
-    // 8️⃣ Production response
+    // PROD: don't expose link
     return res.status(200).json({
       success: true,
       message: "If that email exists, a reset link has been sent.",
     });
   } catch (err) {
     console.log("forgotPassword error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 // export const forgotPassword = async (req: Request, res: Response) => {
