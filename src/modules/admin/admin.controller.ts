@@ -60,41 +60,47 @@ export const createUser = async (req: any, res: Response) => {
 
 
 export const getAllUsers = async (req: Request, res: Response) => {
-  
-  const page = Math.max(parseInt(req.query.page as string) || 1, 1);
-  const limit = Math.max(parseInt(req.query.limit as string) || 10, 1);
+  try {
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit as string) || 10, 1);
+    const skip = (page - 1) * limit;
 
-  const skip = (page - 1) * limit;
+    const search = (req.query.search as string)?.trim();
+    const filter: any = {};
+    
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
 
-  // Optional: basic search (safe to keep even if you don’t use it in frontend yet)
-  const search = (req.query.search as string)?.trim();
-  const filter: any = {};
-  if (search) {
-    filter.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-    ];
+    const [users, total] = await Promise.all([
+      User.find(filter).select("-password").skip(skip).limit(limit).sort({ createdAt: -1 }),
+      User.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
   }
-
-  const [users, total] = await Promise.all([
-    User.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
-    User.countDocuments(filter),
-  ]);
-
-  const totalPages = Math.ceil(total / limit);
-
-  return res.status(200).json({
-    success: true,
-    message: "Users fetched successfully",
-    data: users,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-    },
-  });
 };
+
 
 
 export const getUserById = async (req: Request, res: Response) => {
