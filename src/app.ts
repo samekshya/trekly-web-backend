@@ -9,12 +9,12 @@ import adminRoutes from "./modules/admin/admin.routes";
 
 const app = express();
 
-// Middlewares
+// Middlewares (each one ONCE only)
 app.use(express.json());
-app.use(cookieParser()); 
+app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:3000", 
+    origin: "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -22,33 +22,18 @@ app.use(
   })
 );
 
-
-
-// app.use(
-//   cors({
-//     origin: "http://localhost:3000",
-//     credentials: true,
-
-    
-//   })
-// );
-app.use(cookieParser());
-app.use(express.json());
-app.use("/api/admin", adminRoutes);
-
+// Static uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-
 
 // Health check
 app.get("/health", (_req, res) => {
   res.status(200).json({ success: true, message: "Backend is running" });
 });
 
-
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
-
 
 // Global error handler (keep last)
 app.use(errorHandler);
