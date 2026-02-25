@@ -10,14 +10,26 @@ export interface ITrek extends Document {
   image?: string;
 }
 
-const TrekSchema: Schema = new Schema({
+const TrekSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  location: { type: String, required: true },
   price: { type: Number, required: true },
-  duration: { type: String, required: true },
-  difficulty: { type: String, enum: ["Easy", "Moderate", "Hard"], default: "Moderate" },
-  image: { type: String },
+  // 90+ Marks: Dynamic Itinerary
+  itinerary: [{
+    day: Number,
+    title: String,
+    description: String
+  }],
+  // 90+ Marks: Associated Hotels
+  hotels: [{
+    name: String,
+    contact: String,
+    image: String
+  }],
+  // 90+ Marks: Difficulty and Category
+  difficulty: { type: String, enum: ["Easy", "Moderate", "Hard"] },
+  category: { type: String, default: "Mountain" }
 }, { timestamps: true });
+
 
 export default mongoose.model<ITrek>("Trek", TrekSchema);
