@@ -147,56 +147,129 @@ export const getMe = async (req: any, res: Response) => {
   });
 };
 
-
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
     const user = await User.findOne({ email }).select("_id email");
 
-    // Always return success (security)
+    // Always return success for security
     if (!user) {
-      if (process.env.NODE_ENV !== "production") {
-  return res.status(200).json({
-    success: true,
-    message: "Reset link generated (DEV MODE)",
-    resetLink,
-  });
-}
       return res.status(200).json({
         success: true,
         message: "If that email exists, a reset link has been sent.",
       });
     }
 
+    // 1️⃣ Generate raw token
     const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    // 2️⃣ Hash it before saving
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
 
+    // 3️⃣ Expiry (15 mins)
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    // 4️⃣ Save to DB
     await User.updateOne(
       { _id: user._id },
-      { resetPasswordToken: hashedToken, resetPasswordExpires: expires }
+      {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: expires,
+      }
     );
 
-    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
+    // 5️⃣ CREATE resetLink HERE
+    const resetLink = `${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/reset-password?token=${rawToken}`;
 
+    // 6️⃣ Send email
     await sendEmail(
-  user.email,
-  "Reset your Trekly password",
-  `
-    <h3>Password Reset Request</h3>
-    <p>You requested to reset your password.</p>
-    <p>Click below to reset:</p>
-    <a href="${resetLink}">${resetLink}</a>
-    <p>This link expires in 15 minutes.</p>
-  `
-);
+      user.email,
+      "Reset your Trekly password",
+      `
+        <h3>Password Reset Request</h3>
+        <p>You requested to reset your password.</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 15 minutes.</p>
+      `
+    );
+
+    // 7️⃣ DEV MODE response
+    if (process.env.NODE_ENV !== "production") {
+      return res.status(200).json({
+        success: true,
+        message: "Reset link generated (DEV MODE)",
+        resetLink,
+      });
+    }
+
+    // 8️⃣ Production response
+    return res.status(200).json({
+      success: true,
+      message: "If that email exists, a reset link has been sent.",
+    });
   } catch (err) {
     console.log("forgotPassword error:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
+// export const forgotPassword = async (req: Request, res: Response) => {
+//   try {
+//     const { email } = req.body;
+
+//     const user = await User.findOne({ email }).select("_id email");
+
+//     // Always return success (security)
+//     if (!user) {
+//       if (process.env.NODE_ENV !== "production") {
+//     return res.status(200).json({
+//     success: true,
+//     message: "Reset link generated (DEV MODE)",
+//     resetLink,
+//   });
+//   }
+//       return res.status(200).json({
+//         success: true,
+//         message: "If that email exists, a reset link has been sent.",
+//       });
+//     }
+
+//     const rawToken = crypto.randomBytes(32).toString("hex");
+//     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+//     const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+//     await User.updateOne(
+//       { _id: user._id },
+//       { resetPasswordToken: hashedToken, resetPasswordExpires: expires }
+//     );
+
+//     const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
+
+//     await sendEmail(
+//   user.email,
+//   "Reset your Trekly password",
+//   `
+//     <h3>Password Reset Request</h3>
+//     <p>You requested to reset your password.</p>
+//     <p>Click below to reset:</p>
+//     <a href="${resetLink}">${resetLink}</a>
+//     <p>This link expires in 15 minutes.</p>
+//   `
+// );
+//   } catch (err) {
+//     console.log("forgotPassword error:", err);
+//     return res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
 
 
 
