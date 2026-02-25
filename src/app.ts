@@ -6,12 +6,14 @@ import uploadRoutes from "./modules/upload/upload.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import path from "path";
 import adminRoutes from "./modules/admin/admin.routes";
+import trekRoutes from "./modules/trek/trek.routes";
 
 const app = express();
 
 // Middlewares (each one ONCE only)
 app.use(express.json());
 app.use(cookieParser());
+app.use("/api/treks", trekRoutes);
 app.use(
   cors({
     origin: "http://localhost:3000",
