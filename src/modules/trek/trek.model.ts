@@ -7,7 +7,7 @@ export interface ITrek extends Document {
   duration: number; // days
   difficulty: "Easy" | "Moderate" | "Hard";
   imageUrl: string;
-  price?: number; // optional
+  price?: number;
   itinerary?: { day: number; title: string; description: string }[];
   hotels?: { name: string; contact: string; imageUrl?: string }[];
 }
@@ -26,7 +26,6 @@ const TrekSchema = new Schema<ITrek>(
     },
     imageUrl: { type: String, required: true },
 
-    // Optional extras
     price: { type: Number, required: false },
 
     itinerary: [
@@ -49,6 +48,7 @@ const TrekSchema = new Schema<ITrek>(
 );
 
 export default mongoose.model<ITrek>("Trek", TrekSchema);
+
 
 // import mongoose, { Schema, Document } from "mongoose";
 

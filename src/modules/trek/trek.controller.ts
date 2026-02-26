@@ -1,53 +1,160 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { Request, Response } from "express";
+import Trek from "./trek.model";
 
-export interface ITrek extends Document {
-  name: string;
-  description: string;
-  location: string;
-  duration: number; // days
-  difficulty: "Easy" | "Moderate" | "Hard";
-  imageUrl: string;
-  price?: number;
-  itinerary?: { day: number; title: string; description: string }[];
-  hotels?: { name: string; contact: string; imageUrl?: string }[];
-}
+export const createTrek = async (req: any, res: Response) => {
+  try {
+    const {
+      name,
+      description,
+      location,
+      duration,
+      difficulty,
+      price,
+      itinerary,
+      hotels,
+    } = req.body;
 
-const TrekSchema = new Schema<ITrek>(
-  {
-    name: { type: String, required: true },
-    description: { type: String, required: true },
-    location: { type: String, required: true },
-    duration: { type: Number, required: true }, // e.g. 14
-    difficulty: {
-      type: String,
-      enum: ["Easy", "Moderate", "Hard"],
-      default: "Moderate",
-      required: true,
-    },
-    imageUrl: { type: String, required: true },
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
 
-    price: { type: Number, required: false },
+    const newTrek = await Trek.create({
+      name,
+      description,
+      location,
+      duration: Number(duration),
+      difficulty,
+      imageUrl,
+      price: price ? Number(price) : undefined,
+      itinerary:
+        typeof itinerary === "string" ? JSON.parse(itinerary) : itinerary,
+      hotels: typeof hotels === "string" ? JSON.parse(hotels) : hotels,
+    });
 
-    itinerary: [
-      {
-        day: { type: Number },
-        title: { type: String },
-        description: { type: String },
+    return res.status(201).json({ success: true, data: newTrek });
+  } catch (error: any) {
+    console.error("createTrek error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
+  }
+};
+
+export const getAllTreks = async (req: Request, res: Response) => {
+  try {
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit as string) || 10, 1);
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+    if (req.query.difficulty) filter.difficulty = req.query.difficulty;
+    if (req.query.search) {
+      filter.$or = [
+        { name: { $regex: req.query.search, $options: "i" } },
+        { location: { $regex: req.query.search, $options: "i" } },
+      ];
+    }
+
+    const [treks, total] = await Promise.all([
+      Trek.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
+      Trek.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: treks,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-    ],
+    });
+  } catch (error: any) {
+    console.error("getAllTreks error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
+  }
+};
 
-    hotels: [
-      {
-        name: { type: String },
-        contact: { type: String },
-        imageUrl: { type: String },
-      },
-    ],
-  },
-  { timestamps: true }
-);
+export const getTrekById = async (req: Request, res: Response) => {
+  try {
+    const trek = await Trek.findById(req.params.id);
+    if (!trek)
+      return res
+        .status(404)
+        .json({ success: false, message: "Trek not found" });
+    return res.status(200).json({ success: true, data: trek });
+  } catch (error: any) {
+    console.error("getTrekById error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
+  }
+};
 
-export default mongoose.model<ITrek>("Trek", TrekSchema);
+export const updateTrek = async (req: any, res: Response) => {
+  try {
+    const {
+      name,
+      description,
+      location,
+      duration,
+      difficulty,
+      price,
+      itinerary,
+      hotels,
+    } = req.body;
+
+    const updateData: any = {
+      name,
+      description,
+      location,
+      difficulty,
+    };
+
+    if (duration) updateData.duration = Number(duration);
+    if (price) updateData.price = Number(price);
+    if (typeof itinerary === "string")
+      updateData.itinerary = JSON.parse(itinerary);
+    if (typeof hotels === "string") updateData.hotels = JSON.parse(hotels);
+    if (req.file) updateData.imageUrl = `/uploads/${req.file.filename}`;
+
+    const trek = await Trek.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+    });
+
+    if (!trek)
+      return res
+        .status(404)
+        .json({ success: false, message: "Trek not found" });
+
+    return res.status(200).json({ success: true, data: trek });
+  } catch (error: any) {
+    console.error("updateTrek error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
+  }
+};
+
+export const deleteTrek = async (req: Request, res: Response) => {
+  try {
+    const trek = await Trek.findByIdAndDelete(req.params.id);
+    if (!trek)
+      return res
+        .status(404)
+        .json({ success: false, message: "Trek not found" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Trek deleted successfully" });
+  } catch (error: any) {
+    console.error("deleteTrek error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
+  }
+};
+
 
 // import { Request, Response } from "express";
 // import Trek from "./trek.model";
