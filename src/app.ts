@@ -8,6 +8,9 @@ import { errorHandler } from "./middlewares/errorHandler";
 import path from "path";
 import trekRoutes from "./modules/trek/trek.routes";
 console.log("trekRoutes value:", trekRoutes); // ← ADD THIS
+// src/app.ts
+
+
 
 
 const app = express();
@@ -34,7 +37,7 @@ app.get("/health", (_req, res) => {
 // Routes (ALL routes together, after middlewares)
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/treks", trekRoutes);   // ← moved here with other routes
+app.use("/api/treks", trekRoutes);   
 app.use("/api/upload", uploadRoutes);
 
 // Global error handler (always last)

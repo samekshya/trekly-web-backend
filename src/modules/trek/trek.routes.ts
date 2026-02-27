@@ -1,24 +1,35 @@
+// trek.routes.ts
 import { Router } from "express";
-import { requireAuth } from "../../middlewares/requireAuth";
-import { isAdmin } from "../../middlewares/isAdmin";
-import { upload } from "../../config/multer";
-import {
-  createTrek,
-  getAllTreks,
-  getTrekById,
-  updateTrek,
-  deleteTrek,
-} from "./trek.controller";
+import { createTrek, getAllTreks, getTrekById, updateTrek, deleteTrek } from "./trek.controller";
 
 const router = Router();
 
-// PUBLIC routes (Flutter + Web can read treks without login)
+router.post("/", createTrek);        // no upload.single(...)
 router.get("/", getAllTreks);
 router.get("/:id", getTrekById);
-
-// ADMIN only routes (Web Admin Panel)
-router.post("/", requireAuth, isAdmin, upload.single("image"), createTrek);
-router.put("/:id", requireAuth, isAdmin, upload.single("image"), updateTrek);
-router.delete("/:id", requireAuth, isAdmin, deleteTrek);
+router.put("/:id", updateTrek);
+router.delete("/:id", deleteTrek);
 
 export default router;
+
+// // src/modules/trek/trek.routes.ts
+// import { Router } from "express";
+// import multer from "multer";
+// import {
+//   createTrek,
+//   getAllTreks,
+//   getTrekById,
+//   updateTrek,
+//   deleteTrek,
+// } from "./trek.controller";
+
+// const router = Router();
+// const upload = multer({ dest: "uploads/" });
+
+// router.post("/", upload.single("image"), createTrek);
+// router.get("/", getAllTreks);
+// router.get("/:id", getTrekById);
+// router.put("/:id", upload.single("image"), updateTrek);
+// router.delete("/:id", deleteTrek);
+
+// export default router;

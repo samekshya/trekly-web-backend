@@ -3,6 +3,8 @@ import Trek from "./trek.model";
 
 export const createTrek = async (req: any, res: Response) => {
   try {
+    console.log("BODY:", req.body);
+
     const {
       name,
       description,
@@ -12,9 +14,8 @@ export const createTrek = async (req: any, res: Response) => {
       price,
       itinerary,
       hotels,
+      imageUrl,          // <-- add this
     } = req.body;
-
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
 
     const newTrek = await Trek.create({
       name,
@@ -22,21 +23,66 @@ export const createTrek = async (req: any, res: Response) => {
       location,
       duration: Number(duration),
       difficulty,
-      imageUrl,
+      imageUrl,          // <-- use JSON field
       price: price ? Number(price) : undefined,
       itinerary:
-        typeof itinerary === "string" ? JSON.parse(itinerary) : itinerary,
-      hotels: typeof hotels === "string" ? JSON.parse(hotels) : hotels,
+        typeof itinerary === "string" && itinerary.trim() !== ""
+          ? JSON.parse(itinerary)
+          : undefined,
+      hotels:
+        typeof hotels === "string" && hotels.trim() !== ""
+          ? JSON.parse(hotels)
+          : undefined,
     });
 
     return res.status(201).json({ success: true, data: newTrek });
   } catch (error: any) {
-    console.error("createTrek error:", error.message);
+    console.error("createTrek error:", error);
     return res
       .status(500)
       .json({ success: false, message: error.message || "Server error" });
   }
 };
+
+// export const createTrek = async (req: any, res: Response) => {
+//   try {
+//     console.log("BODY:", req.body);
+//     console.log("FILE:", req.file);
+
+//     const {
+//       name,
+//       description,
+//       location,
+//       duration,
+//       difficulty,
+//       price,
+//       itinerary,
+//       hotels,
+//     } = req.body;
+
+//     const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
+
+//     const newTrek = await Trek.create({
+//       name,
+//       description,
+//       location,
+//       duration: Number(duration),
+//       difficulty,
+//       imageUrl,
+//       price: price ? Number(price) : undefined,
+//       itinerary:
+//         typeof itinerary === "string" ? JSON.parse(itinerary) : itinerary,
+//       hotels: typeof hotels === "string" ? JSON.parse(hotels) : hotels,
+//     });
+
+//     return res.status(201).json({ success: true, data: newTrek });
+//   } catch (error: any) {
+//     console.error("createTrek error:", error.message);
+//     return res
+//       .status(500)
+//       .json({ success: false, message: error.message || "Server error" });
+//   }
+// };
 
 export const getAllTreks = async (req: Request, res: Response) => {
   try {
