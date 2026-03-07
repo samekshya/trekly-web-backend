@@ -151,5 +151,4 @@ Automated tests are implemented to verify:
 ## Author
 
 Samikshya Baniya
-Web API Development Coursework
 Softwarica College of IT & E-Commerce
