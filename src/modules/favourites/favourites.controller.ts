@@ -5,7 +5,7 @@ import Favourite from "./favourites.model";
 export const addFavourite = async (req: any, res: Response) => {
   try {
     const { trekId } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id; // ← changed from _id to id
 
     const existing = await Favourite.findOne({ user: userId, trek: trekId });
     if (existing) {
@@ -22,7 +22,7 @@ export const addFavourite = async (req: any, res: Response) => {
 // Get all favourites for logged in user
 export const getFavourites = async (req: any, res: Response) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id; // ← changed
     const favourites = await Favourite.find({ user: userId }).populate("trek");
     return res.status(200).json({ success: true, data: favourites });
   } catch (error: any) {
@@ -33,7 +33,7 @@ export const getFavourites = async (req: any, res: Response) => {
 // Remove from favourites
 export const removeFavourite = async (req: any, res: Response) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id; // ← changed
     const { trekId } = req.params;
 
     const favourite = await Favourite.findOneAndDelete({ user: userId, trek: trekId });
@@ -50,7 +50,7 @@ export const removeFavourite = async (req: any, res: Response) => {
 // Check if a trek is favourited
 export const checkFavourite = async (req: any, res: Response) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id; // ← changed
     const { trekId } = req.params;
 
     const favourite = await Favourite.findOne({ user: userId, trek: trekId });
