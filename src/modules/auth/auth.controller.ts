@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import { sendEmail } from "../../utils/sendEmail";
+import { env } from "../../config/env";
 
 export const registerUser = async (
   req: Request,
@@ -253,12 +254,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
       success: true,
       message: "If that email exists, a reset link has been sent.",
     });
-  } catch (err) {
-    console.log("forgotPassword error:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
+  } catch (mailErr) {
+  console.log("sendEmail failed:", mailErr);  // this line already exists
+  // ADD THIS LINE:
+  console.log("EMAIL CONFIG:", env.EMAIL_USER, env.EMAIL_FROM);
+}
 };
-// export const forgotPassword = async (req: Request, res: Response) => {
+
 //   try {
 //     const { email } = req.body;
 
