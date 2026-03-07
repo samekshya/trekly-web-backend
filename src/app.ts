@@ -9,6 +9,7 @@ import path from "path";
 import trekRoutes from "./modules/trek/trek.routes";
 import favouriteRoutes from "./modules/favourites/favourites.routes";
 console.log("trekRoutes value:", trekRoutes); // ← ADD THIS
+console.log("favouriteRoutes value:", favouriteRoutes); // ← ADD THIS
 // src/app.ts
 
 
@@ -40,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/treks", trekRoutes);   
 app.use("/api/upload", uploadRoutes);
+app.use("/api/favourites", favouriteRoutes);
 
 // Global error handler (always last)
 app.use(errorHandler);
