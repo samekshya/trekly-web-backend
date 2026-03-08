@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Trek from "./trek.model";
 import { sendBookingConfirmation } from "../../services/emailService";
+import Booking from "../booking/booking.model";
 
 export const createTrek = async (req: any, res: Response) => {
   try {
@@ -204,7 +205,7 @@ export const deleteTrek = async (req: Request, res: Response) => {
 
 
 
-export const bookTrek = async (req: Request, res: Response) => {
+export const bookTrek = async (req: any, res: Response) => {
   try {
     const trek = await Trek.findById(req.params.id);
     if (!trek) return res.status(404).json({ success: false, message: "Trek not found" });
@@ -215,6 +216,22 @@ export const bookTrek = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
+    const totalPrice = trek.price * parseInt(people);
+
+    // Save booking to database
+    await Booking.create({
+      trekId: trek._id,
+      userId: req.user?.id || undefined,
+      name,
+      email,
+      phone,
+      date,
+      people: parseInt(people),
+      notes,
+      totalPrice,
+    });
+
+    // Send confirmation email
     await sendBookingConfirmation({
       toEmail: email,
       toName: name,
@@ -222,7 +239,7 @@ export const bookTrek = async (req: Request, res: Response) => {
       trekLocation: trek.location,
       date,
       people: parseInt(people),
-      totalPrice: trek.price * parseInt(people),
+      totalPrice,
     });
 
     return res.status(200).json({ success: true, message: "Booking confirmed and email sent!" });

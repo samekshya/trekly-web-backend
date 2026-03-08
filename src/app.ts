@@ -9,6 +9,8 @@ import path from "path";
 import trekRoutes from "./modules/trek/trek.routes";
 import favouriteRoutes from "./modules/favourites/favourites.routes";
 import weatherRoutes from "./modules/weather/weather.routes";
+import bookingRoutes from "./modules/booking/booking.routes";
+import reviewRoutes from "./modules/review/review.routes";
 console.log("trekRoutes value:", trekRoutes); // ← ADD THIS
 console.log("favouriteRoutes value:", favouriteRoutes); // ← ADD THIS
 // src/app.ts
@@ -44,6 +46,8 @@ app.use("/api/treks", trekRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/favourites", favouriteRoutes);
 app.use("/api/weather", weatherRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 // Global error handler (always last)
 app.use(errorHandler);
