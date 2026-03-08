@@ -151,4 +151,3 @@ Automated tests are implemented to verify:
 ## Author
 
 Samikshya Baniya
-Softwarica College of IT & E-Commerce
