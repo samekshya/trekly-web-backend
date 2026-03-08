@@ -200,7 +200,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email }).select("_id email");
 
-    // Always return success (security)
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -210,7 +209,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const rawToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
-
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
     await User.updateOne(
@@ -218,98 +216,38 @@ export const forgotPassword = async (req: Request, res: Response) => {
       { resetPasswordToken: hashedToken, resetPasswordExpires: expires }
     );
 
-    const resetLink = `${
-      process.env.FRONTEND_URL || "http://localhost:3000"
-    }/reset-password?token=${rawToken}`;
+    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
 
-    // try sending email (but don't fail the whole request in dev)
     try {
+      console.log("=== ATTEMPTING TO SEND RESET EMAIL TO:", user.email);
       await sendEmail(
         user.email,
         "Reset your Trekly password",
         `
           <h3>Password Reset Request</h3>
-          <p>You requested to reset your password.</p>
-          <p>Click below to reset:</p>
+          <p>Click below to reset your password:</p>
           <a href="${resetLink}">${resetLink}</a>
           <p>This link expires in 15 minutes.</p>
         `
       );
+      console.log("=== RESET EMAIL SENT SUCCESSFULLY ===");
     } catch (mailErr) {
-      console.log("sendEmail failed:", mailErr);
-      // In dev, we still want the link back
+      console.log("=== RESET EMAIL FAILED:", mailErr);
     }
 
-    // DEV MODE: return the link so Postman testing is easy
-    if (process.env.NODE_ENV !== "production") {
-      return res.status(200).json({
-        success: true,
-        message: "Reset link generated (DEV MODE)",
-        resetLink,
-      });
-    }
+    console.log("=== RESET LINK (DEV):", resetLink);
 
-    // PROD: don't expose link
     return res.status(200).json({
       success: true,
-      message: "If that email exists, a reset link has been sent.",
+      message: "Reset link generated (DEV MODE)",
+      resetLink,
     });
-  } catch (mailErr) {
-  console.log("sendEmail failed:", mailErr);  // this line already exists
-  // ADD THIS LINE:
-  console.log("EMAIL CONFIG:", env.EMAIL_USER, env.EMAIL_FROM);
-}
+
+  } catch (err) {
+    console.log("forgotPassword error:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
 };
-
-//   try {
-//     const { email } = req.body;
-
-//     const user = await User.findOne({ email }).select("_id email");
-
-//     // Always return success (security)
-//     if (!user) {
-//       if (process.env.NODE_ENV !== "production") {
-//     return res.status(200).json({
-//     success: true,
-//     message: "Reset link generated (DEV MODE)",
-//     resetLink,
-//   });
-//   }
-//       return res.status(200).json({
-//         success: true,
-//         message: "If that email exists, a reset link has been sent.",
-//       });
-//     }
-
-//     const rawToken = crypto.randomBytes(32).toString("hex");
-//     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
-
-//     const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
-
-//     await User.updateOne(
-//       { _id: user._id },
-//       { resetPasswordToken: hashedToken, resetPasswordExpires: expires }
-//     );
-
-//     const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
-
-//     await sendEmail(
-//   user.email,
-//   "Reset your Trekly password",
-//   `
-//     <h3>Password Reset Request</h3>
-//     <p>You requested to reset your password.</p>
-//     <p>Click below to reset:</p>
-//     <a href="${resetLink}">${resetLink}</a>
-//     <p>This link expires in 15 minutes.</p>
-//   `
-// );
-//   } catch (err) {
-//     console.log("forgotPassword error:", err);
-//     return res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
-
 
 
 export const resetPassword = async (req: Request, res: Response) => {
